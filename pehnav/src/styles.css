@@ -1,0 +1,293 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * PEHNAV — Wear Your Story
+ * Premium fashion design system.
+ * Palette: Black #000, Off-white #F5F5F5, Beige #D8C3A5, Gold #BFA16A
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-beige: var(--beige);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-display: "Geist", "Inter", sans-serif;
+
+  --tracking-luxe: 0.28em;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  --background: oklch(0.97 0.003 90);
+  --foreground: oklch(0.16 0.004 60);
+
+  --card: oklch(0.99 0.002 90);
+  --card-foreground: oklch(0.16 0.004 60);
+
+  --popover: oklch(0.99 0.002 90);
+  --popover-foreground: oklch(0.16 0.004 60);
+
+  --primary: oklch(0.16 0.004 60);
+  --primary-foreground: oklch(0.97 0.003 90);
+
+  --secondary: oklch(0.93 0.012 85);
+  --secondary-foreground: oklch(0.16 0.004 60);
+
+  --muted: oklch(0.93 0.008 85);
+  --muted-foreground: oklch(0.48 0.01 70);
+
+  --accent: oklch(0.82 0.045 80);
+  --accent-foreground: oklch(0.16 0.004 60);
+
+  --gold: oklch(0.72 0.07 80);
+  --beige: oklch(0.82 0.045 80);
+
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.88 0.008 85);
+  --input: oklch(0.88 0.008 85);
+  --ring: oklch(0.72 0.07 80);
+}
+
+.dark {
+  --background: oklch(0.14 0.004 60);
+  --foreground: oklch(0.95 0.003 90);
+  --card: oklch(0.18 0.004 60);
+  --card-foreground: oklch(0.95 0.003 90);
+  --popover: oklch(0.18 0.004 60);
+  --popover-foreground: oklch(0.95 0.003 90);
+  --primary: oklch(0.95 0.003 90);
+  --primary-foreground: oklch(0.14 0.004 60);
+  --secondary: oklch(0.24 0.006 70);
+  --secondary-foreground: oklch(0.95 0.003 90);
+  --muted: oklch(0.24 0.006 70);
+  --muted-foreground: oklch(0.65 0.01 80);
+  --accent: oklch(0.72 0.07 80);
+  --accent-foreground: oklch(0.14 0.004 60);
+  --gold: oklch(0.72 0.07 80);
+  --beige: oklch(0.82 0.045 80);
+  --border: oklch(0.28 0.006 70);
+  --input: oklch(0.28 0.006 70);
+  --ring: oklch(0.72 0.07 80);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility eyebrow {
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-luxe);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+@utility marquee-track {
+  animation: marquee 28s linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Add-to-Cart fly particle ── */
+@keyframes fly-to-cart {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  60%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--fly-x), var(--fly-y)) scale(0.2); }
+}
+@utility animate-fly-to-cart {
+  animation: fly-to-cart 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Cart badge bounce ── */
+@keyframes cart-bounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.5); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+@utility animate-cart-bounce {
+  animation: cart-bounce 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── Wishlist heart pop ── */
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.5) rotate(-8deg); }
+  65%  { transform: scale(0.85) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@utility animate-heart-pop {
+  animation: heart-pop 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── Order success checkmark draw ── */
+@keyframes check-draw {
+  from { stroke-dashoffset: 80; }
+  to   { stroke-dashoffset: 0; }
+}
+@utility animate-check-draw {
+  animation: check-draw 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+/* ── Success circle scale in ── */
+@keyframes scale-in {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@utility animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Confetti ── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(180px) rotate(720deg); opacity: 0; }
+}
+
+/* ── Slide in from right (mobile drawer) ── */
+@keyframes slide-in-right {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@utility animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Fade in overlay ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@utility animate-fade-in {
+  animation: fade-in 0.25s ease both;
+}
+
+/* ── Stagger fade-up for lists ── */
+@keyframes stagger-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@utility animate-stagger-up {
+  animation: stagger-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Shake (input error) ── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+@utility animate-shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── Pulse ring (cart icon when items added) ── */
+@keyframes ping-once {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+@utility animate-ping-once {
+  animation: ping-once 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Float (product card quick add) ── */
+@keyframes float-up-fade {
+  0%   { opacity: 0; transform: translateY(8px); }
+  15%  { opacity: 1; transform: translateY(0); }
+  85%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+@utility animate-float-up-fade {
+  animation: float-up-fade 2s ease forwards;
+}
+
+/* ── Step transition ── */
+@keyframes step-slide-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@utility animate-step-slide-in {
+  animation: step-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Toast slide in from right ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(110%) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@utility animate-toast-in {
+  animation: toast-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Toast slide out to right ── */
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); max-height: 120px; }
+  to   { opacity: 0; transform: translateX(110%) scale(0.92); max-height: 0; }
+}
+@utility animate-toast-out {
+  animation: toast-out 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Toast progress bar drain ── */
+@keyframes toast-progress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}

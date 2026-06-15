@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  background: #0f1117;
+  color: #e8e8e8;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3d4a; }
+
+.stat-card {
+  @apply rounded-xl border border-[#2a2d3a] bg-[#161920] p-5;
+}
+.table-row {
+  @apply border-b border-[#2a2d3a] hover:bg-[#1a1d27] transition-colors;
+}
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50;
+}
+.btn-ghost {
+  @apply inline-flex items-center gap-2 rounded-lg border border-[#2a2d3a] px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-[#1a1d27] disabled:opacity-50;
+}
+.input {
+  @apply w-full rounded-lg border border-[#2a2d3a] bg-[#0f1117] px-3 py-2.5 text-sm text-gray-100 placeholder:text-gray-500 outline-none focus:border-gold transition-colors;
+}
+.select {
+  @apply w-full rounded-lg border border-[#2a2d3a] bg-[#0f1117] px-3 py-2.5 text-sm text-gray-100 outline-none focus:border-gold transition-colors;
+}
+.panel {
+  @apply rounded-xl border border-[#2a2d3a] bg-[#161920];
+}
