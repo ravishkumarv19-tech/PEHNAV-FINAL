@@ -13,6 +13,7 @@ import {
 import {
   HERO_FRAME_CONFIG,
   preloadFrameSequence,
+  preloadFrameSequenceProgressive,
   drawCoverImage,
 } from "@/lib/hero-frames";
 
@@ -105,34 +106,36 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
     );
   }, []);
 
-  // Preload frame sequence or fallback assets
+  // Preload frame sequence progressively (Instant Frame 0 + Tier 1 Milestones + Tier 2 In-betweens)
   useEffect(() => {
-    let isCancelled = false;
+    let cancelPreload: (() => void) | null = null;
 
-    async function loadAssets() {
-      // 1. Try loading fallback imagery first to guarantee instant visual rendering
-      const fallbackImgs = await preloadFrameSequence(HERO_FRAME_CONFIG.fallbackImages);
-      if (isCancelled) return;
+    // 1. Preload fallback imagery
+    preloadFrameSequence(HERO_FRAME_CONFIG.fallbackImages).then((fallbackImgs) => {
       fallbackImagesRef.current = fallbackImgs.filter(Boolean);
+    });
 
-      // 2. Preload sequential frames (e.g. from Google Veo / Public folder)
-      preloadFrameSequence(frameUrls, (_loaded, _total, percent) => {
-        if (!isCancelled) setLoadedPercent(percent);
-      }).then((loadedFrames) => {
-        if (isCancelled) return;
-        const validFrames = loadedFrames.filter(Boolean);
-        if (validFrames.length > 5) {
-          framesRef.current = validFrames;
+    // 2. Initialize frames array of exact length
+    const totalFrames = HERO_FRAME_CONFIG.frameCount;
+    framesRef.current = new Array(totalFrames);
+
+    // 3. Start high-speed progressive stream
+    cancelPreload = preloadFrameSequenceProgressive(
+      frameUrls,
+      (index, img) => {
+        framesRef.current[index] = img;
+        if (index === 0) {
+          setIsReady(true);
           setHasCustomFrames(true);
         }
-        setIsReady(true);
-      });
-    }
-
-    loadAssets();
+      },
+      (_loaded, _total, percent) => {
+        setLoadedPercent(percent);
+      }
+    );
 
     return () => {
-      isCancelled = true;
+      cancelPreload?.();
     };
   }, [frameUrls]);
 
@@ -184,21 +187,36 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
 
       // Map progress from 0 to 0.85 so all frames and chapters 100% finish before the track unpins!
       const animProgress = Math.min(1, progress / 0.85);
+      const totalFrames = HERO_FRAME_CONFIG.frameCount;
 
       if (frames.length > 0) {
-        // High-precision direct frame indexing for 100% solid, razor-sharp 2.5K frames (zero ghosting/blur)
         const frameIndex = Math.min(
-          frames.length - 1,
-          Math.round(animProgress * (frames.length - 1))
+          totalFrames - 1,
+          Math.round(animProgress * (totalFrames - 1))
         );
-        const currentFrame = frames[frameIndex];
+
+        // Instant nearest-neighbor frame lookup ensures zero blank frames during fast scrubs
+        let currentFrame = frames[frameIndex];
+        if (!currentFrame) {
+          for (let d = 1; d < totalFrames; d++) {
+            if (frameIndex - d >= 0 && frames[frameIndex - d]) {
+              currentFrame = frames[frameIndex - d];
+              break;
+            }
+            if (frameIndex + d < totalFrames && frames[frameIndex + d]) {
+              currentFrame = frames[frameIndex + d];
+              break;
+            }
+          }
+        }
+
         if (currentFrame) {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
           drawCoverImage(ctx, currentFrame, canvasW, canvasH, 1.0, 0);
         }
       } else if (fallbacks.length > 0) {
-        // Fallback multi-angle parallax transitions when custom frame folder isn't populated
+        // Fallback multi-angle parallax transitions
         const fallbackIndex = Math.min(
           fallbacks.length - 1,
           Math.floor(animProgress * fallbacks.length)
