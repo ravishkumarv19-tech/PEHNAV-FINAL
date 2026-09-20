@@ -4,18 +4,23 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing Supabase env vars. Copy .env.example to .env and fill in your keys."
+  console.warn(
+    "⚠️  Supabase env vars not set. Auth features will not work.\n" +
+    "Copy .env.example to .env and fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
+);
 
 // ─── Database Types ────────────────────────────────────────────────────────────
 
@@ -150,4 +155,15 @@ export interface DBCartItem {
   size: string;
   color: string;
   qty: number;
+}
+
+// Alias for backward compat
+export type Profile = DBProfile;
+
+export interface DBOrderStatusHistory {
+  id: string;
+  order_id: string;
+  status: string;
+  note: string | null;
+  created_at: string;
 }

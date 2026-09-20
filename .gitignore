@@ -1,0 +1,37 @@
+# Environment files
+.env
+.env*.local
+*.env
+
+# Dependencies & Build
+node_modules/
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.tanstack/**
+.nitro/
+*.local
+*.tsbuildinfo
+package-lock.json
+
+# Vercel & Deployment
+.vercel/
+.wrangler/
+.dev.vars
+
+# Temporary, scratch & test scripts
+scratch/
+*.py
+test_*.webp
+test_*.jpg
+test_*.mjs
+fetch_*.mjs
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.agents/

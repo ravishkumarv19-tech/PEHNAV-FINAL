@@ -32,91 +32,143 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-gold: var(--gold);
   --color-beige: var(--beige);
+  --color-cyan: var(--cyan);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
-  --font-display: "Geist", "Inter", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "Syne", "Space Grotesk", sans-serif;
+  --font-mono: "Space Grotesk", monospace;
 
-  --tracking-luxe: 0.28em;
+  --tracking-luxe: 0.22em;
+  --tracking-tight: -0.04em;
+
+  --ease-spring-bounce: var(--spring-bounce);
+  --ease-spring-tight: var(--spring-tight);
 }
 
 :root {
-  --radius: 0.25rem;
+  --radius: 0.375rem;
 
-  --background: oklch(0.97 0.003 90);
-  --foreground: oklch(0.16 0.004 60);
+  --background: oklch(0.09 0.005 260);
+  --foreground: oklch(0.96 0.002 240);
 
-  --card: oklch(0.99 0.002 90);
-  --card-foreground: oklch(0.16 0.004 60);
+  --card: oklch(0.13 0.005 260);
+  --card-foreground: oklch(0.96 0.002 240);
 
-  --popover: oklch(0.99 0.002 90);
-  --popover-foreground: oklch(0.16 0.004 60);
+  --popover: oklch(0.13 0.005 260);
+  --popover-foreground: oklch(0.96 0.002 240);
 
-  --primary: oklch(0.16 0.004 60);
-  --primary-foreground: oklch(0.97 0.003 90);
+  --primary: oklch(0.96 0.002 240);
+  --primary-foreground: oklch(0.09 0.005 260);
 
-  --secondary: oklch(0.93 0.012 85);
-  --secondary-foreground: oklch(0.16 0.004 60);
+  --secondary: oklch(0.17 0.006 260);
+  --secondary-foreground: oklch(0.96 0.002 240);
 
-  --muted: oklch(0.93 0.008 85);
-  --muted-foreground: oklch(0.48 0.01 70);
+  --muted: oklch(0.17 0.006 260);
+  --muted-foreground: oklch(0.62 0.01 250);
 
-  --accent: oklch(0.82 0.045 80);
-  --accent-foreground: oklch(0.16 0.004 60);
+  --accent: oklch(0.72 0.16 210);
+  --accent-foreground: oklch(0.09 0.005 260);
 
-  --gold: oklch(0.72 0.07 80);
-  --beige: oklch(0.82 0.045 80);
+  --gold: oklch(0.72 0.16 210); /* Modern Ice Cyan */
+  --cyan: oklch(0.72 0.16 210);
+  --beige: oklch(0.22 0.008 260);
 
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.88 0.008 85);
-  --input: oklch(0.88 0.008 85);
-  --ring: oklch(0.72 0.07 80);
+  --border: oklch(0.22 0.006 260);
+  --input: oklch(0.22 0.006 260);
+  --ring: oklch(0.72 0.16 210);
+
+  /* Modern smooth easings */
+  --spring-bounce: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-tight: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark {
-  --background: oklch(0.14 0.004 60);
-  --foreground: oklch(0.95 0.003 90);
-  --card: oklch(0.18 0.004 60);
-  --card-foreground: oklch(0.95 0.003 90);
-  --popover: oklch(0.18 0.004 60);
-  --popover-foreground: oklch(0.95 0.003 90);
-  --primary: oklch(0.95 0.003 90);
-  --primary-foreground: oklch(0.14 0.004 60);
-  --secondary: oklch(0.24 0.006 70);
-  --secondary-foreground: oklch(0.95 0.003 90);
-  --muted: oklch(0.24 0.006 70);
-  --muted-foreground: oklch(0.65 0.01 80);
-  --accent: oklch(0.72 0.07 80);
-  --accent-foreground: oklch(0.14 0.004 60);
-  --gold: oklch(0.72 0.07 80);
-  --beige: oklch(0.82 0.045 80);
-  --border: oklch(0.28 0.006 70);
-  --input: oklch(0.28 0.006 70);
-  --ring: oklch(0.72 0.07 80);
+  --background: oklch(0.09 0.005 260);
+  --foreground: oklch(0.96 0.002 240);
+  --card: oklch(0.13 0.005 260);
+  --card-foreground: oklch(0.96 0.002 240);
+  --popover: oklch(0.13 0.005 260);
+  --popover-foreground: oklch(0.96 0.002 240);
+  --primary: oklch(0.96 0.002 240);
+  --primary-foreground: oklch(0.09 0.005 260);
+  --secondary: oklch(0.17 0.006 260);
+  --secondary-foreground: oklch(0.96 0.002 240);
+  --muted: oklch(0.17 0.006 260);
+  --muted-foreground: oklch(0.62 0.01 250);
+  --accent: oklch(0.72 0.16 210);
+  --accent-foreground: oklch(0.09 0.005 260);
+  --gold: oklch(0.72 0.16 210);
+  --cyan: oklch(0.72 0.16 210);
+  --beige: oklch(0.22 0.008 260);
+  --border: oklch(0.22 0.006 260);
+  --input: oklch(0.22 0.006 260);
+  --ring: oklch(0.72 0.16 210);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    overflow-x: clip;
   }
 
   body {
+    overflow-x: clip;
+    max-width: 100%;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Prevent 300ms tap delay & improve touch response */
+  a, button, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Prevent iOS automatic zoom on input focus */
+  @media (max-width: 639px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+}
+
+/* ── Mobile Safe Area Utilities ── */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.bottom-safe {
+  bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Clean Smooth Horizontal Scroll ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @utility eyebrow {
@@ -291,3 +343,420 @@
   from { width: 100%; }
   to   { width: 0%; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PEHNAV PRO-MAX DESIGN SYSTEM UPGRADE
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Scroll reveal utility ─────────────────────────────────── */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(40px) skewY(1deg); }
+  to   { opacity: 1; transform: translateY(0) skewY(0); }
+}
+@utility animate-reveal-up {
+  animation: reveal-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Text shimmer (gold highlight) ─────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@utility text-shimmer {
+  background: linear-gradient(90deg, #BFA16A 0%, #F5E6C8 40%, #BFA16A 60%, #A0844A 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ── Cursor glow (hero spotlight effect) ──────────────────── */
+.cursor-glow {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(191,161,106,0.06) 0%, transparent 70%);
+  transition: background 0.15s ease;
+}
+
+/* ── Section reveal watcher ───────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* ── Native CSS Scroll-driven entry reveals ────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes reveal-scroll-up {
+      from {
+        opacity: 0;
+        transform: translateY(48px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .reveal {
+      animation: reveal-scroll-up auto linear backwards;
+      animation-timeline: view();
+      animation-range: entry 5% entry 32%;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    /* Staggered entry ranges for child elements */
+    .reveal-delay-1 { animation-range: entry 8% entry 35%; }
+    .reveal-delay-2 { animation-range: entry 11% entry 38%; }
+    .reveal-delay-3 { animation-range: entry 14% entry 41%; }
+    .reveal-delay-4 { animation-range: entry 17% entry 44%; }
+  }
+}
+
+/* ── Magazine-style heading ───────────────────────────────── */
+@utility heading-editorial {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+}
+
+/* ── Product card hover image swap ───────────────────────── */
+.card-img-back {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.group:hover .card-img-back {
+  opacity: 1;
+}
+.card-img-front {
+  transition: opacity 0.5s ease;
+}
+.group:hover .card-img-front {
+  opacity: 0;
+}
+
+/* ── Magnetic button effect ───────────────────────────────── */
+.btn-magnetic {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Glass morphism panel ─────────────────────────────────── */
+@utility glass-panel {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* ── Marquee fast variant ─────────────────────────────────── */
+@utility marquee-fast {
+  animation: marquee 16s linear infinite;
+}
+
+/* ── Hover underline draw effect ──────────────────────────── */
+.underline-draw {
+  position: relative;
+}
+.underline-draw::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.underline-draw:hover::after {
+  width: 100%;
+}
+
+/* ── Color swatch pulse (product card) ───────────────────── */
+@keyframes swatch-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.swatch-enter {
+  animation: swatch-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Parallax container ───────────────────────────────────── */
+.parallax-slow {
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+/* ── Mega menu ────────────────────────────────────────────── */
+@keyframes mega-drop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.mega-menu {
+  animation: mega-drop 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Number ticker animation ─────────────────────────────── */
+@keyframes count-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.stat-number {
+  animation: count-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Hero text stroke variant ────────────────────────────── */
+.text-stroke-gold {
+  -webkit-text-stroke: 1px #BFA16A;
+  color: transparent;
+}
+
+/* ── Image zoom on hover (cards) ─────────────────────────── */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.img-zoom:hover img {
+  transform: scale(1.08);
+}
+
+/* ── Split layout text block ─────────────────────────────── */
+.split-reveal > * {
+  overflow: hidden;
+}
+
+/* ── Smooth image load ───────────────────────────────────── */
+img {
+  transition: opacity 0.3s ease;
+}
+img[data-loaded="false"] {
+  opacity: 0;
+}
+
+/* ── Badge premium variant ───────────────────────────────── */
+/* ── Badge modern variant ────────────────────────────────── */
+@utility badge-modern {
+  background: #000;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@utility badge-gold {
+  background: #000;
+  color: #38bdf8;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* ── Newsletter input glow ───────────────────────────────── */
+.input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  outline: none;
+}
+
+/* ── Spring and physical easing utilities ─────────────────── */
+.spring-hover {
+  transition: transform 0.5s var(--spring-bounce), box-shadow 0.5s var(--spring-bounce);
+}
+.spring-hover:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 16px 30px -10px rgba(0, 0, 0, 0.15);
+}
+.spring-click {
+  transition: transform 0.2s var(--spring-tight);
+}
+.spring-click:active {
+  transform: scale(0.95);
+}
+
+/* ── View Transitions Customizations ──────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(*) {
+    animation-duration: 0.5s;
+    animation-timing-function: var(--spring-bounce);
+  }
+}
+
+/* ── Grid item entrance ───────────────────────────────────── */
+@keyframes grid-item-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.grid-item-fade-in {
+  animation: grid-item-fade 0.35s ease-out both;
+}
+
+/* ── Hotspot Pulse Pin Animation (Modern Cyber / White) ── */
+@keyframes hotspot-pulse {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 14px rgba(56, 189, 248, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+.hotspot-pin {
+  animation: hotspot-pulse 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* ── Glassmorphism & Liquid Glass ── */
+.glass-modern {
+  background: rgba(18, 19, 24, 0.85);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-modern {
+  background: rgba(16, 17, 20, 0.85);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-luxury {
+  background: rgba(18, 19, 24, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-luxury {
+  background: rgba(16, 17, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-dark {
+  background: rgba(12, 13, 16, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Modern Heading Accent ── */
+.heading-editorial {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  text-transform: uppercase;
+}
+
+.heading-serif-italic {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.03em;
+}
+
+/* ── Modern Text Gradient ── */
+.text-gold-gradient, .text-gradient-cyan {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-stroke-gold {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.8);
+  color: transparent;
+}
+
+/* ── Clean Streetwear Product Card Hover (Zero Shake, Zero Tilt) ── */
+.product-card-container {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.product-card-container:hover {
+  transform: translateY(-4px);
+}
+.product-card-img-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: oklch(0.13 0.005 260);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.product-card-container:hover .product-card-img-wrap {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 12px 25px -8px rgba(0, 0, 0, 0.6), 0 0 16px -4px rgba(56, 189, 248, 0.2);
+}
+.product-card-img {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-card-container:hover .product-card-img {
+  transform: scale(1.04);
+}
+
+/* ── Ambient Radial Lighting (Cool Cyan / Violet) ── */
+.ambient-glow-gold, .ambient-glow-cyan {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(129, 140, 248, 0.04) 45%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Scroll progress top bar ── */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #38bdf8);
+  transform-origin: 0%;
+  z-index: 100;
+}
+
+
+

@@ -239,7 +239,8 @@ create table public.order_items (
   color        text not null,
   qty          integer not null,
   unit_price   numeric(10,2) not null,
-  total_price  numeric(10,2) not null
+  total_price  numeric(10,2) not null,
+  created_at   timestamptz not null default now()
 );
 
 -- ============================================================
@@ -506,3 +507,124 @@ create policy "authenticated_insert_audit" on public.admin_audit_log
 
 -- Explicitly NO update or delete policy — logs are immutable
 
+
+-- ============================================================
+-- MISSING PATCHES (added to fix runtime errors)
+-- ============================================================
+
+-- increment_coupon_usage: called from checkout after successful order
+-- Uses a security definer so it can bypass RLS
+create or replace function public.increment_coupon_usage(p_code text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.coupons
+  set used_count = coalesce(used_count, 0) + 1
+  where code = p_code;
+end;
+$$;
+
+-- Allow guests (anon) to insert order_items as long as the order exists
+-- and was created by them (order has null user_id for guests)
+create policy "guest_insert_order_items" on public.order_items
+  for insert with check (
+    exists (
+      select 1 from public.orders
+      where id = order_id
+        and (user_id = auth.uid() or user_id is null)
+    )
+  );
+
+-- Allow anyone to insert order_status_history for their own orders
+create policy "users_insert_order_history" on public.order_status_history
+  for insert with check (
+    exists (
+      select 1 from public.orders
+      where id = order_id
+        and (user_id = auth.uid() or user_id is null)
+    )
+  );
+
+
+-- ============================================================
+-- STORAGE BUCKET FOR PRODUCT IMAGES
+-- Run this in Supabase SQL Editor (Storage section)
+-- ============================================================
+
+-- Create the product-images bucket (public so images load in the store)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'product-images',
+  'product-images',
+  true,
+  5242880,  -- 5MB max per file
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+)
+on conflict (id) do nothing;
+
+-- Allow admins to upload images
+create policy "admin_upload_product_images" on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'product-images'
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Allow admins to update (replace) images
+create policy "admin_update_product_images" on storage.objects
+  for update
+  to authenticated
+  using (
+    bucket_id = 'product-images'
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Allow admins to delete images
+create policy "admin_delete_product_images" on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'product-images'
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Allow anyone (including guests) to view product images
+create policy "public_read_product_images" on storage.objects
+  for select
+  using (bucket_id = 'product-images');
+
+-- ============================================================
+-- PRODUCT ENHANCEMENTS — run these ALTER statements if schema
+-- was already applied. If running fresh, these are harmless.
+-- ============================================================
+
+-- Key highlights (Flipkart-style): array of {label, value} pairs
+alter table public.products
+  add column if not exists highlights jsonb not null default '[]';
+
+-- Specifications: array of {label, value} pairs (tab on PDP)
+alter table public.products
+  add column if not exists specs jsonb not null default '[]';
+
+-- Custom colors: array of {hex, name} objects
+-- NOTE: existing `colors` column stores hex strings for backwards compat.
+-- New `custom_colors` stores {hex, name} objects for named colors.
+alter table public.products
+  add column if not exists custom_colors jsonb not null default '[]';
+
+-- ── Blog enhancements ────────────────────────────────────────
+alter table public.blog_posts
+  add column if not exists author text not null default 'PEHNAV Team';
+alter table public.blog_posts
+  add column if not exists read_time integer not null default 5;
+alter table public.blog_posts
+  add column if not exists tags text[] not null default '{}';

@@ -1,11 +1,11 @@
 // supabase/functions/send-order-email/index.ts
-// Triggered by Supabase DB webhook on orders INSERT
+// Luxury order confirmation email generator & Resend dispatcher for PEHNAV
 // Deploy: supabase functions deploy send-order-email
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "orders@pehnav.com";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "orders@pehnav.store";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,14 +17,17 @@ interface OrderPayload {
   email: string;
   shipping_name: string;
   shipping_line1: string;
+  shipping_line2?: string;
   shipping_city: string;
   shipping_state: string;
   shipping_pincode: string;
+  phone?: string;
   total: number;
   subtotal: number;
   discount: number;
   shipping_fee: number;
   coupon_code?: string;
+  created_at?: string;
   items?: Array<{
     product_name: string;
     size: string;
@@ -32,30 +35,50 @@ interface OrderPayload {
     qty: number;
     unit_price: number;
     total_price: number;
-    image_url: string;
+    image_url?: string;
   }>;
 }
 
 function buildEmailHtml(order: OrderPayload): string {
-  const formatPrice = (n: number) =>
-    `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  const formatINR = (n: number) =>
+    `₹${Math.round(n).toLocaleString("en-IN")}`;
 
-  const itemRows = (order.items ?? [])
+  const formattedDate = order.created_at
+    ? new Date(order.created_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : new Date().toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+
+  const trackingUrl = `https://pehnav.store/track?q=${encodeURIComponent(order.order_number)}`;
+
+  const itemRowsHtml = (order.items || [])
     .map(
       (item) => `
       <tr>
-        <td style="padding:12px 0;border-bottom:1px solid #f0ece4;">
-          <table width="100%" cellpadding="0" cellspacing="0">
+        <td style="padding: 14px 0; border-bottom: 1px solid #27272A; vertical-align: middle;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-              <td width="60">
-                <img src="${item.image_url}" width="60" height="72" style="border-radius:6px;object-fit:cover;display:block;" alt="${item.product_name}" />
+              <td style="vertical-align: middle;">
+                <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #FFFFFF; line-height: 1.3;">
+                  ${item.product_name}
+                </p>
+                <p style="margin: 0 0 4px 0; font-size: 13px; color: #A1A1AA;">
+                  Size: <strong style="color: #E4E4E7;">${item.size}</strong> &nbsp;|&nbsp; Color: <strong style="color: #E4E4E7;">${item.color}</strong>
+                </p>
+                <p style="margin: 0; font-size: 13px; color: #A1A1AA;">
+                  Qty: <span style="color: #E4E4E7;">${item.qty}</span> × ${formatINR(item.unit_price)}
+                </p>
               </td>
-              <td style="padding-left:16px;vertical-align:top;">
-                <p style="margin:0;font-size:14px;font-weight:600;color:#1a1a1a;">${item.product_name}</p>
-                <p style="margin:4px 0 0;font-size:12px;color:#888;">${item.size} · ${item.color} · ×${item.qty}</p>
-              </td>
-              <td style="text-align:right;vertical-align:top;font-size:14px;font-weight:600;color:#1a1a1a;white-space:nowrap;">
-                ${formatPrice(item.total_price)}
+              <td style="vertical-align: middle; text-align: right; white-space: nowrap; padding-left: 12px;">
+                <span style="font-size: 15px; font-weight: 700; color: #D4AF37;">
+                  ${formatINR(item.total_price)}
+                </span>
               </td>
             </tr>
           </table>
@@ -66,104 +89,146 @@ function buildEmailHtml(order: OrderPayload): string {
     .join("");
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Confirmed — PEHNAV</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed — ${order.order_number} | PEHNAV</title>
 </head>
-<body style="margin:0;padding:0;background:#f7f4ef;font-family:'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f4ef;padding:32px 0;">
+<body style="margin: 0; padding: 0; background-color: #09090B; color: #F4F4F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #09090B; padding: 36px 12px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
-
-          <!-- Header -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 620px; background-color: #121215; border-radius: 16px; border: 1px solid #27272A; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+          
+          <!-- Top Gold Line -->
           <tr>
-            <td style="background:#1a1a1a;padding:28px 40px;text-align:center;">
-              <p style="margin:0;font-size:22px;font-weight:700;letter-spacing:0.22em;color:#ffffff;">PEHNAV</p>
-              <p style="margin:6px 0 0;font-size:11px;letter-spacing:0.1em;color:#BFA16A;">WEAR YOUR STORY</p>
+            <td style="height: 4px; background: linear-gradient(90deg, #937338 0%, #D4AF37 50%, #937338 100%);"></td>
+          </tr>
+
+          <!-- Brand Header -->
+          <tr>
+            <td style="padding: 36px 40px 24px; text-align: center; background-color: #18181B; border-bottom: 1px solid #27272A;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 0.28em; color: #FFFFFF; text-transform: uppercase;">PEHNAV</h1>
+              <p style="margin: 6px 0 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.25em; color: #D4AF37; text-transform: uppercase;">Wear Your Story</p>
             </td>
           </tr>
 
-          <!-- Hero -->
+          <!-- Hero Status -->
           <tr>
-            <td style="padding:36px 40px 24px;text-align:center;border-bottom:1px solid #f0ece4;">
-              <div style="width:56px;height:56px;background:#f0f9f4;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-                <span style="font-size:28px;">✓</span>
+            <td style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #27272A; background: radial-gradient(circle at top, rgba(212, 175, 55, 0.08) 0%, rgba(18, 18, 21, 0) 70%);">
+              <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 18px;">
+                <tr>
+                  <td align="center" valign="middle" style="width: 60px; height: 60px; border-radius: 50%; background-color: #064E3B; border: 2px solid #10B981; color: #FFFFFF; font-size: 26px; line-height: 60px;">✓</td>
+                </tr>
+              </table>
+              <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #FFFFFF;">Order Confirmed!</h2>
+              <p style="margin: 10px 0 0; font-size: 15px; color: #A1A1AA; line-height: 1.6;">
+                Thank you for choosing PEHNAV, <strong style="color: #FFFFFF;">${order.shipping_name}</strong>.<br />
+                Your handcrafted garment is being prepared with utmost care.
+              </p>
+              <div style="margin-top: 24px;">
+                <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; background-color: #27272A; border-radius: 30px; border: 1px solid #3F3F46;">
+                  <tr>
+                    <td style="padding: 10px 22px; font-size: 14px; font-weight: 600; color: #D4AF37; letter-spacing: 0.05em;">
+                      ORDER #${order.order_number}
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 8px 0 0 0; font-size: 12px; color: #71717A;">Placed on ${formattedDate}</p>
               </div>
-              <h1 style="margin:0;font-size:22px;font-weight:700;color:#1a1a1a;">Order Confirmed!</h1>
-              <p style="margin:10px 0 0;font-size:14px;color:#888;line-height:1.6;">
-                Your story is being packed. We'll notify you when it ships.
-              </p>
-              <p style="margin:16px 0 0;display:inline-block;background:#f7f4ef;padding:8px 20px;border-radius:6px;font-size:14px;font-weight:600;color:#1a1a1a;">
-                ${order.order_number}
-              </p>
             </td>
           </tr>
 
-          <!-- Items -->
+          <!-- Items Ordered -->
           <tr>
-            <td style="padding:24px 40px;">
-              <p style="margin:0 0 16px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#888;">Your Items</p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                ${itemRows}
+            <td style="padding: 28px 40px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-bottom: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #D4AF37;">
+                    Items in Your Order (${(order.items || []).reduce((acc, curr) => acc + curr.qty, 0)})
+                  </td>
+                </tr>
+                ${itemRowsHtml}
               </table>
             </td>
           </tr>
 
-          <!-- Totals -->
+          <!-- Totals Breakdown -->
           <tr>
-            <td style="padding:0 40px 24px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f4ef;border-radius:8px;padding:16px 20px;">
+            <td style="padding: 0 40px 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #18181B; border: 1px solid #27272A; border-radius: 12px; padding: 20px;">
                 <tr>
-                  <td style="font-size:13px;color:#888;padding:4px 0;">Subtotal</td>
-                  <td style="font-size:13px;color:#888;text-align:right;">${formatPrice(order.subtotal)}</td>
+                  <td style="font-size: 14px; color: #A1A1AA; padding: 6px 0;">Subtotal</td>
+                  <td style="font-size: 14px; color: #FFFFFF; text-align: right; padding: 6px 0; font-weight: 500;">${formatINR(order.subtotal)}</td>
                 </tr>
                 ${order.discount > 0 ? `
                 <tr>
-                  <td style="font-size:13px;color:#1a7a5e;padding:4px 0;">Discount ${order.coupon_code ? `(${order.coupon_code})` : ""}</td>
-                  <td style="font-size:13px;color:#1a7a5e;text-align:right;">− ${formatPrice(order.discount)}</td>
+                  <td style="font-size: 14px; color: #10B981; padding: 6px 0;">Discount ${order.coupon_code ? `(${order.coupon_code})` : ""}</td>
+                  <td style="font-size: 14px; color: #10B981; text-align: right; padding: 6px 0; font-weight: 600;">− ${formatINR(order.discount)}</td>
                 </tr>` : ""}
                 <tr>
-                  <td style="font-size:13px;color:#888;padding:4px 0;">Shipping</td>
-                  <td style="font-size:13px;color:#888;text-align:right;">${order.shipping_fee === 0 ? "Free" : formatPrice(order.shipping_fee)}</td>
+                  <td style="font-size: 14px; color: #A1A1AA; padding: 6px 0;">Shipping</td>
+                  <td style="font-size: 14px; text-align: right; padding: 6px 0; font-weight: 500;">
+                    ${order.shipping_fee === 0 ? `<span style="color: #10B981; font-weight: 600;">FREE</span>` : `<span style="color: #FFFFFF;">${formatINR(order.shipping_fee)}</span>`}
+                  </td>
                 </tr>
+                <tr><td colspan="2" style="padding: 10px 0 0 0; border-top: 1px solid #27272A;"></td></tr>
                 <tr>
-                  <td style="font-size:15px;font-weight:700;color:#1a1a1a;padding:12px 0 4px;border-top:1px solid #e0dbd2;">Total</td>
-                  <td style="font-size:15px;font-weight:700;color:#1a1a1a;text-align:right;padding-top:12px;border-top:1px solid #e0dbd2;">${formatPrice(order.total)}</td>
+                  <td style="font-size: 16px; font-weight: 700; color: #FFFFFF; padding: 6px 0;">Total Paid</td>
+                  <td style="font-size: 20px; font-weight: 800; color: #D4AF37; text-align: right; padding: 6px 0;">${formatINR(order.total)}</td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Shipping address -->
+          <!-- Delivery Details -->
           <tr>
-            <td style="padding:0 40px 32px;">
-              <p style="margin:0 0 8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#888;">Delivering to</p>
-              <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.7;">
-                ${order.shipping_name}<br/>
-                ${order.shipping_line1}<br/>
-                ${order.shipping_city}, ${order.shipping_state} — ${order.shipping_pincode}
-              </p>
+            <td style="padding: 0 40px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #18181B; border: 1px solid #27272A; border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td width="50%" style="vertical-align: top; padding-right: 12px;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #D4AF37;">Delivery Address</p>
+                    <p style="margin: 0; font-size: 14px; color: #FFFFFF; font-weight: 600;">${order.shipping_name}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #A1A1AA; line-height: 1.6;">
+                      ${order.shipping_line1}<br />
+                      ${order.shipping_line2 ? `${order.shipping_line2}<br />` : ""}
+                      ${order.shipping_city}, ${order.shipping_state} — ${order.shipping_pincode}
+                    </p>
+                  </td>
+                  <td width="50%" style="vertical-align: top; padding-left: 12px; border-left: 1px solid #27272A;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #D4AF37;">Estimated Delivery</p>
+                    <p style="margin: 0; font-size: 14px; color: #FFFFFF; font-weight: 600;">3 – 5 Business Days</p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #A1A1AA; line-height: 1.5;">Insured express delivery with live milestone tracking.</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- CTA -->
+          <!-- CTA Button -->
           <tr>
-            <td style="padding:0 40px 40px;text-align:center;">
-              <a href="https://pehnav.com/track" style="display:inline-block;background:#1a1a1a;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;padding:14px 32px;border-radius:6px;">
-                Track Your Order
-              </a>
+            <td style="padding: 0 40px 36px; text-align: center;">
+              <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                <tr>
+                  <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #D4AF37 0%, #AA8329 100%); box-shadow: 0 4px 14px rgba(212, 175, 55, 0.25);">
+                    <a href="${trackingUrl}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #09090B; text-transform: uppercase; text-decoration: none; border-radius: 8px;">
+                      Track Your Order Live →
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background:#f7f4ef;padding:24px 40px;text-align:center;border-top:1px solid #ece8e0;">
-              <p style="margin:0;font-size:12px;color:#aaa;line-height:1.8;">
-                Questions? Email us at <a href="mailto:support@pehnav.com" style="color:#BFA16A;text-decoration:none;">support@pehnav.com</a><br/>
-                7-day returns · Free shipping on orders above ₹1,499 · Made in India
+            <td style="padding: 32px 40px; text-align: center; background-color: #0F0F11;">
+              <p style="margin: 0; font-size: 13px; color: #A1A1AA;">
+                Questions? Contact our concierge at <a href="mailto:orders@pehnav.store" style="color: #D4AF37; text-decoration: none; font-weight: 600;">orders@pehnav.store</a>
+              </p>
+              <p style="margin: 16px 0 0 0; font-size: 11px; color: #52525B;">
+                © ${new Date().getFullYear()} PEHNAV. All rights reserved. • Handcrafted in India
               </p>
             </td>
           </tr>
@@ -184,27 +249,49 @@ serve(async (req) => {
 
     const html = buildEmailHtml(payload);
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `PEHNAV <${FROM_EMAIL}>`,
-        to: [payload.email],
-        subject: `Order Confirmed — ${payload.order_number} | PEHNAV`,
-        html,
-      }),
-    });
+    const senders = [
+      `PEHNAV <${FROM_EMAIL}>`,
+      `PEHNAV <orders@pehnav.store>`,
+      `PEHNAV <onboarding@resend.dev>`,
+    ];
 
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Resend error: ${err}`);
+    let lastError = "";
+    let emailId = null;
+
+    for (const sender of senders) {
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: sender,
+            to: [payload.email],
+            reply_to: "orders@pehnav.store",
+            subject: `Order Confirmed: #${payload.order_number} | PEHNAV`,
+            html,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.id) {
+          emailId = data.id;
+          break;
+        } else {
+          lastError = data?.message || data?.error || "Resend error";
+        }
+      } catch (err: any) {
+        lastError = err?.message || String(err);
+      }
     }
 
-    const data = await res.json();
-    return new Response(JSON.stringify({ success: true, id: data.id }), {
+    if (!emailId) {
+      throw new Error(`Failed to send email via Resend: ${lastError}`);
+    }
+
+    return new Response(JSON.stringify({ success: true, id: emailId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

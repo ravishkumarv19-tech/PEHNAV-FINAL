@@ -5,15 +5,13 @@ import {
   createRootRouteWithContext,
   useRouter,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { reportError } from "../lib/error-reporting";
 import { I18nProvider } from "../lib/i18n";
 import { StoreProvider } from "../lib/store";
 import { AuthProvider } from "../lib/auth";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import StyleAssistant from "../components/StyleAssistant";
 import { ToastProvider } from "../components/Toast";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
@@ -39,9 +37,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
-  useEffect(() => {
-    reportError(error, { boundary: "root_error_component" });
-  }, [error]);
+  console.error("[PEHNAV Error]", error);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -85,7 +81,7 @@ function RootComponent() {
                 <Navbar />
                 <main className="flex-1"><Outlet /></main>
                 <Footer />
-                <StyleAssistant trigger="fab" />
+                <Toaster position="bottom-right" richColors />
               </div>
             </ToastProvider>
           </StoreProvider>

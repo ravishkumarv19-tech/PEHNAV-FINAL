@@ -3,11 +3,9 @@ import {
   products as seedProducts,
   categories as seedCategories,
   collections as seedCollections,
-  blogPosts as seedBlogPosts,
   type Product,
   type Category,
   type Collection,
-  type BlogPost,
 } from "./data";
 
 /* ---------------------------------- Types --------------------------------- */
@@ -69,7 +67,6 @@ export interface AdminState {
   customers: Customer[];
   reviews: Review[];
   coupons: Coupon[];
-  blogPosts: BlogPost[];
 }
 
 /* --------------------------------- Seeding -------------------------------- */
@@ -160,7 +157,6 @@ function seedState(): AdminState {
     customers,
     reviews,
     coupons,
-    blogPosts: [...seedBlogPosts],
   };
 }
 
@@ -257,17 +253,6 @@ export function useAdminStore() {
     setState((s) => ({ ...s, coupons: s.coupons.map((c) => (c.id === id ? { ...c, active: !c.active } : c)) }));
   }, []);
 
-  /* Blog */
-  const saveBlogPost = useCallback((b: BlogPost) => {
-    setState((s) => {
-      const exists = s.blogPosts.some((x) => x.id === b.id);
-      return { ...s, blogPosts: exists ? s.blogPosts.map((x) => (x.id === b.id ? b : x)) : [b, ...s.blogPosts] };
-    });
-  }, []);
-  const deleteBlogPost = useCallback((id: string) => {
-    setState((s) => ({ ...s, blogPosts: s.blogPosts.filter((x) => x.id !== id) }));
-  }, []);
-
   /* Derived metrics */
   const metrics = useMemo(() => {
     const paidOrders = state.orders.filter((o) => o.status !== "cancelled");
@@ -317,8 +302,6 @@ export function useAdminStore() {
     saveCoupon,
     deleteCoupon,
     toggleCoupon,
-    saveBlogPost,
-    deleteBlogPost,
   };
 }
 

@@ -37,6 +37,9 @@ export interface Product {
   compare_at: number | null;
   image_url: string;
   gallery: string[];
+  custom_colors: { hex: string; name: string }[];
+  highlights: { label: string; value: string }[];
+  specs: { label: string; value: string }[];
   category: string;
   product_group: string;
   gender: "men" | "women" | "unisex";
@@ -65,6 +68,7 @@ export interface Order {
   status: OrderStatus;
   shipping_name: string;
   shipping_line1: string;
+  shipping_line2?: string | null;
   shipping_city: string;
   shipping_state: string;
   shipping_pincode: string;
@@ -74,9 +78,11 @@ export interface Order {
   total: number;
   coupon_code: string | null;
   payment_status: PaymentStatus;
+  razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   tracking_number: string | null;
   courier: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
   order_items?: OrderItem[];
@@ -93,6 +99,7 @@ export interface OrderItem {
   qty: number;
   unit_price: number;
   total_price: number;
+  created_at: string;
 }
 
 export interface Review {
@@ -108,6 +115,7 @@ export interface Review {
   created_at: string;
 }
 
+// Fixed: schema uses used_count not times_used
 export interface Coupon {
   id: string;
   code: string;
@@ -115,9 +123,10 @@ export interface Coupon {
   value: number;
   min_spend: number;
   max_uses: number | null;
-  used_count: number;
+  used_count: number;   // ← correct field name matching schema
   active: boolean;
   expires_at: string | null;
+  created_at: string;
 }
 
 export interface AuditLog {
@@ -127,8 +136,8 @@ export interface AuditLog {
   action: string;
   table_name: string;
   record_id: string | null;
-  old_value: object | null;
-  new_value: object | null;
+  old_value: Record<string, unknown> | null;
+  new_value: Record<string, unknown> | null;
   ip_address: string | null;
   created_at: string;
 }

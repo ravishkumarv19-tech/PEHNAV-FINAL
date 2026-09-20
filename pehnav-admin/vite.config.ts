@@ -1,16 +1,32 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
+  server: {
+    port: 4000,
+    host: true,
+    watch: {
+      usePolling: process.platform === "win32",
+    },
+  },
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "./src"),
+    },
+  },
+  define: {
+    "process.env": {},
+  },
   build: {
-    // Separate chunk for recharts — keeps main bundle lean
+    outDir: "dist",
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
-          recharts: ["recharts"],
+          vendor: ["react", "react-dom", "react-router-dom"],
+          charts: ["recharts"],
           supabase: ["@supabase/supabase-js"],
         },
       },

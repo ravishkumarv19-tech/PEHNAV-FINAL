@@ -6,7 +6,7 @@ const dict = {
   en: {
     "nav.home": "Home", "nav.men": "Men", "nav.women": "Women", "nav.unisex": "Unisex",
     "nav.collections": "Collections", "nav.new": "New Arrivals", "nav.best": "Best Sellers",
-    "nav.stories": "Stories", "nav.blog": "Blog", "nav.contact": "Contact",
+    "nav.stories": "Stories", "nav.contact": "Contact",
     "hero.sub": "Every outfit tells a story.",
     "cta.shop": "Shop Now", "cta.stories": "Explore Stories", "cta.view": "View",
     "cta.addCart": "Add to Cart", "cta.buyNow": "Buy Now", "cta.wishlist": "Wishlist",
@@ -30,7 +30,7 @@ const dict = {
   hi: {
     "nav.home": "होम", "nav.men": "पुरुष", "nav.women": "महिला", "nav.unisex": "यूनिसेक्स",
     "nav.collections": "कलेक्शन", "nav.new": "नए आगमन", "nav.best": "बेस्ट सेलर",
-    "nav.stories": "कहानियाँ", "nav.blog": "ब्लॉग", "nav.contact": "संपर्क",
+    "nav.stories": "कहानियाँ", "nav.contact": "संपर्क",
     "hero.sub": "हर पहनावा एक कहानी कहता है।",
     "cta.shop": "अभी खरीदें", "cta.stories": "कहानियाँ देखें", "cta.view": "देखें",
     "cta.addCart": "कार्ट में डालें", "cta.buyNow": "अभी खरीदें", "cta.wishlist": "विशलिस्ट",

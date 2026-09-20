@@ -7,6 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment & Secrets
+.env
+.env*.local
+*.env
+
+# Dependencies & Build
 node_modules
 dist
 dist-ssr
@@ -15,10 +21,19 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+*.tsbuildinfo
+package-lock.json
 
-# Wrangler / Cloudflare
+# Vercel & Cloudflare
+.vercel/
 .wrangler/
 .dev.vars
+
+# Scratch & test scripts
+scratch/
+*.py
+test_*.*
+fetch_*.*
 
 # Editor directories and files
 .vscode/*

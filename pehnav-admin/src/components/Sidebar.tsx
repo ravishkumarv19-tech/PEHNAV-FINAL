@@ -1,103 +1,52 @@
-import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard, Package, ShoppingCart, Users,
-  Star, Ticket, FileText, BarChart3, Settings,
-  LogOut, ExternalLink, Shield,
-} from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Package, ShoppingBag, Users, Tag, Star, ScrollText, LogOut, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const NAV = [
-  { group: "Overview", items: [
-    { to: "/", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  ]},
-  { group: "Catalog", items: [
-    { to: "/products", label: "Products", icon: Package },
-  ]},
-  { group: "Sales", items: [
-    { to: "/orders", label: "Orders", icon: ShoppingCart },
-    { to: "/coupons", label: "Coupons", icon: Ticket },
-  ]},
-  { group: "Community", items: [
-    { to: "/customers", label: "Customers", icon: Users },
-    { to: "/reviews", label: "Reviews", icon: Star },
-  ]},
-  { group: "Content", items: [
-    { to: "/blog", label: "Blog", icon: FileText },
-  ]},
-  { group: "System", items: [
-    { to: "/audit", label: "Audit Log", icon: Shield },
-    { to: "/settings", label: "Settings", icon: Settings },
-  ]},
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/orders",    icon: ShoppingBag,     label: "Orders"    },
+  { to: "/products",  icon: Package,         label: "Products"  },
+  { to: "/customers", icon: Users,           label: "Customers" },
+  { to: "/coupons",   icon: Tag,             label: "Coupons"   },
+  { to: "/reviews",   icon: Star,            label: "Reviews"   },
+  { to: "/audit",     icon: ScrollText,      label: "Audit Log" },
 ];
 
-export default function Sidebar() {
-  const { pathname } = useLocation();
-  const { profile, signOut } = useAuth();
-
-  const isActive = (to: string) =>
-    to === "/" ? pathname === "/" : pathname.startsWith(to);
-
+export default function Sidebar({ onSignOut }: { onSignOut: () => void }) {
+  const { profile } = useAuth();
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-[#2a2d3a] bg-sidebar">
-      {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-[#2a2d3a] px-5 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15">
-          <span className="text-xs font-bold text-gold">P</span>
+    <aside className="bg-sidebar flex w-56 flex-col border-r border-[#1e2130]">
+      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[#1e2130]">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#BFA16A]">
+          <Zap className="h-4 w-4 text-black" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">PEHNAV</p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">Admin Console</p>
+          <p className="text-sm font-bold tracking-widest text-white">PEHNAV</p>
+          <p className="text-[9px] text-gray-600 tracking-wider uppercase">Admin Panel</p>
         </div>
       </div>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {NAV.map((group) => (
-          <div key={group.group} className="mb-5">
-            <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
-              {group.group}
-            </p>
-            {group.items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors mb-0.5 ${
-                  isActive(item.to)
-                    ? "bg-gold/15 text-gold font-medium"
-                    : "text-gray-400 hover:bg-sidebar-hover hover:text-gray-200"
-                }`}
-              >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {item.label}
-              </Link>
-            ))}
-          </div>
+      <nav className="flex-1 space-y-0.5 px-2 py-4">
+        {NAV.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to}
+            className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive ? "bg-[#BFA16A]/15 text-[#BFA16A]" : "text-gray-500 hover:bg-[#1e2130] hover:text-gray-300"}`}>
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            {label}
+          </NavLink>
         ))}
       </nav>
-
-      {/* Footer */}
-      <div className="border-t border-[#2a2d3a] p-3 space-y-1">
-        <a
-          href={import.meta.env.VITE_STORE_URL ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-sidebar-hover hover:text-gray-200 transition-colors"
-        >
-          <ExternalLink className="h-4 w-4" />
-          View Store
-        </a>
-        <button
-          onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </button>
-        <div className="px-3 pt-2 pb-1">
-          <p className="text-xs font-medium text-gray-300 truncate">{profile?.full_name ?? profile?.email}</p>
-          <p className="text-[10px] text-gray-600 truncate">{profile?.email}</p>
+      <div className="border-t border-[#1e2130] p-3">
+        <div className="mb-2 flex items-center gap-2.5 px-2">
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#2a2d3a] text-xs font-bold text-gray-300">
+            {(profile?.full_name ?? profile?.email ?? "A")[0].toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium text-white">{profile?.full_name ?? "Admin"}</p>
+            <p className="truncate text-[10px] text-gray-600">{profile?.email}</p>
+          </div>
         </div>
+        <button onClick={onSignOut} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-gray-600 hover:bg-[#1e2130] hover:text-red-400 transition-colors">
+          <LogOut className="h-3.5 w-3.5" /> Sign Out
+        </button>
       </div>
     </aside>
   );
