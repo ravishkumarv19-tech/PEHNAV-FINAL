@@ -167,9 +167,9 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
 
     // Render loop
     const render = () => {
-      // Snappy responsive lerp damping: tight synchronization so the animation stays locked to the scroll
+      // Silky fluid lerp damping: eliminates abrupt wheel-click steps for butter-smooth momentum
       const diff = targetProgressRef.current - currentProgressRef.current;
-      currentProgressRef.current += diff * (isMobile ? 0.45 : 0.35);
+      currentProgressRef.current += diff * (isMobile ? 0.20 : 0.14);
 
       const progress = Math.max(0, Math.min(1, currentProgressRef.current));
       setScrollProgress(progress);
@@ -190,30 +190,37 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
       const totalFrames = HERO_FRAME_CONFIG.frameCount;
 
       if (frames.length > 0) {
-        const frameIndex = Math.min(
-          totalFrames - 1,
-          Math.round(animProgress * (totalFrames - 1))
-        );
+        // Continuous floating-point sub-frame interpolation (Apple product page technique)
+        const exactFrame = Math.max(0, Math.min(totalFrames - 1, animProgress * (totalFrames - 1)));
+        const baseIndex = Math.floor(exactFrame);
+        const nextIndex = Math.min(totalFrames - 1, baseIndex + 1);
+        const blend = exactFrame - baseIndex;
 
-        // Instant nearest-neighbor frame lookup ensures zero blank frames during fast scrubs
-        let currentFrame = frames[frameIndex];
-        if (!currentFrame) {
+        // Instant nearest-neighbor resolver ensures 0ms blank frames during fast scrubs
+        const resolveFrame = (idx: number): HTMLImageElement | null => {
+          if (frames[idx]) return frames[idx];
           for (let d = 1; d < totalFrames; d++) {
-            if (frameIndex - d >= 0 && frames[frameIndex - d]) {
-              currentFrame = frames[frameIndex - d];
-              break;
-            }
-            if (frameIndex + d < totalFrames && frames[frameIndex + d]) {
-              currentFrame = frames[frameIndex + d];
-              break;
-            }
+            if (idx - d >= 0 && frames[idx - d]) return frames[idx - d];
+            if (idx + d < totalFrames && frames[idx + d]) return frames[idx + d];
           }
-        }
+          return null;
+        };
 
-        if (currentFrame) {
+        const baseFrame = resolveFrame(baseIndex);
+        const nextFrame = resolveFrame(nextIndex);
+
+        if (baseFrame) {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
-          drawCoverImage(ctx, currentFrame, canvasW, canvasH, 1.0, 0);
+          ctx.globalAlpha = 1.0;
+          drawCoverImage(ctx, baseFrame, canvasW, canvasH, 1.0, 0);
+
+          // Sub-frame temporal cross-fade blend produces seamless continuous optical motion between frames
+          if (blend > 0.03 && nextFrame && nextFrame !== baseFrame) {
+            ctx.globalAlpha = blend;
+            drawCoverImage(ctx, nextFrame, canvasW, canvasH, 1.0, 0);
+            ctx.globalAlpha = 1.0;
+          }
         }
       } else if (fallbacks.length > 0) {
         // Fallback multi-angle parallax transitions

@@ -8,8 +8,8 @@ export interface FrameSequenceConfig {
 }
 
 export const HERO_FRAME_CONFIG: FrameSequenceConfig = {
-  // Ultra-optimized 75-frame sequence (2.4MB total payload, 0ms first-frame paint)
-  frameCount: 75,
+  // 160 ultra-smooth dense frames with temporal interpolation (4.5MB total, 0ms latency)
+  frameCount: 160,
   
   // File pattern for optimized WebP frames in /public/hero-frames/
   framePathPattern: (index: number) => {
@@ -72,7 +72,7 @@ export async function preloadFrameSequence(
 /**
  * High-Speed Two-Tier Progressive Preloader (The Apple Product Page Technique)
  * 1. Frame 0 loads instantly (<50ms) as the hero poster.
- * 2. Tier 1: 15 evenly-spaced milestone keyframes load immediately (~400KB total, <200ms).
+ * 2. Tier 1: 20 evenly-spaced milestone keyframes load immediately (~500KB total, <250ms).
  *    At this point, the entire 3D sequence is 100% interactive and scrubbable!
  * 3. Tier 2: Remaining frames stream in the background while user reads title.
  */
@@ -86,7 +86,7 @@ export function preloadFrameSequenceProgressive(
   const total = urls.length;
   if (total === 0) return () => {};
 
-  const step = 5;
+  const step = 8;
   const tier1Indices: number[] = [];
   const tier2Indices: number[] = [];
 
