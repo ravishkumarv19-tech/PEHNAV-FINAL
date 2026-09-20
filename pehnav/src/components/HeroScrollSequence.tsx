@@ -167,9 +167,9 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
 
     // Render loop
     const render = () => {
-      // Silky fluid lerp damping: eliminates abrupt wheel-click steps for butter-smooth momentum
+      // Silky fluid lerp damping: eliminates abrupt wheel-click steps for responsive, butter-smooth momentum
       const diff = targetProgressRef.current - currentProgressRef.current;
-      currentProgressRef.current += diff * (isMobile ? 0.20 : 0.14);
+      currentProgressRef.current += diff * (isMobile ? 0.28 : 0.22);
 
       const progress = Math.max(0, Math.min(1, currentProgressRef.current));
       setScrollProgress(progress);
@@ -190,11 +190,9 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
       const totalFrames = HERO_FRAME_CONFIG.frameCount;
 
       if (frames.length > 0) {
-        // Continuous floating-point sub-frame interpolation (Apple product page technique)
+        // Calculate exact target frame index corresponding to smooth momentum scroll
         const exactFrame = Math.max(0, Math.min(totalFrames - 1, animProgress * (totalFrames - 1)));
-        const baseIndex = Math.floor(exactFrame);
-        const nextIndex = Math.min(totalFrames - 1, baseIndex + 1);
-        const blend = exactFrame - baseIndex;
+        const targetIndex = Math.round(exactFrame);
 
         // Instant nearest-neighbor resolver ensures 0ms blank frames during fast scrubs
         const resolveFrame = (idx: number): HTMLImageElement | null => {
@@ -206,21 +204,13 @@ export default function HeroScrollSequence({ onChapterChange }: HeroScrollSequen
           return null;
         };
 
-        const baseFrame = resolveFrame(baseIndex);
-        const nextFrame = resolveFrame(nextIndex);
+        const activeFrame = resolveFrame(targetIndex);
 
-        if (baseFrame) {
+        if (activeFrame) {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
           ctx.globalAlpha = 1.0;
-          drawCoverImage(ctx, baseFrame, canvasW, canvasH, 1.0, 0);
-
-          // Sub-frame temporal cross-fade blend produces seamless continuous optical motion between frames
-          if (blend > 0.03 && nextFrame && nextFrame !== baseFrame) {
-            ctx.globalAlpha = blend;
-            drawCoverImage(ctx, nextFrame, canvasW, canvasH, 1.0, 0);
-            ctx.globalAlpha = 1.0;
-          }
+          drawCoverImage(ctx, activeFrame, canvasW, canvasH, 1.0, 0);
         }
       } else if (fallbacks.length > 0) {
         // Fallback multi-angle parallax transitions

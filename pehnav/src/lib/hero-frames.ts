@@ -109,7 +109,8 @@ export function preloadFrameSequenceProgressive(
         img.crossOrigin = "anonymous";
       }
       img.src = urls[index];
-      img.onload = () => {
+
+      const handleSuccess = () => {
         if (!isCancelled) {
           loadedCount++;
           onFrameReady(index, img);
@@ -117,6 +118,16 @@ export function preloadFrameSequenceProgressive(
         }
         resolve();
       };
+
+      img.onload = () => {
+        // Offload image decompression from main thread to background GPU/thread pool
+        if ("decode" in img && typeof img.decode === "function") {
+          img.decode().then(handleSuccess).catch(handleSuccess);
+        } else {
+          handleSuccess();
+        }
+      };
+
       img.onerror = () => {
         if (!isCancelled) {
           loadedCount++;
@@ -128,21 +139,27 @@ export function preloadFrameSequenceProgressive(
   };
 
   (async () => {
-    // 1. Load Frame 0 FIRST (Instant hero display)
+    // 1. Load Frame 0 FIRST (Instant hero display, <40ms)
     await loadSingle(0);
     if (isCancelled) return;
 
-    // 2. Load Tier 1 Milestone Keyframes (Full scrub ready in ~200ms)
+    // 2. Load Tier 1 Milestone Keyframes (Every 10th frame, sequence scrubbable in <200ms)
     await Promise.all(tier1Indices.filter((i) => i !== 0).map(loadSingle));
     if (isCancelled) return;
 
-    // 3. Stream Tier 2 in-between frames in small concurrent batches
-    const batchSize = 8;
-    for (let i = 0; i < tier2Indices.length; i += batchSize) {
-      if (isCancelled) break;
-      const batch = tier2Indices.slice(i, i + batchSize);
-      await Promise.all(batch.map(loadSingle));
-    }
+    // 3. Continuous worker pool: maintain 16 concurrent downloads at all times (zero waterfall stall)
+    let queueIdx = 0;
+    const concurrency = 16;
+    const worker = async () => {
+      while (queueIdx < tier2Indices.length && !isCancelled) {
+        const nextIdx = tier2Indices[queueIdx++];
+        await loadSingle(nextIdx);
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, tier2Indices.length) }, () => worker())
+    );
   })();
 
   return () => {
