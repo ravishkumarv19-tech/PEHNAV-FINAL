@@ -8,8 +8,8 @@ export interface FrameSequenceConfig {
 }
 
 export const HERO_FRAME_CONFIG: FrameSequenceConfig = {
-  // 160 ultra-smooth dense frames with temporal interpolation (4.5MB total, 0ms latency)
-  frameCount: 160,
+  // 240 ultra-dense cinematic frames (6.2MB total, ~26KB per frame, 89% lighter than original)
+  frameCount: 240,
   
   // File pattern for optimized WebP frames in /public/hero-frames/
   framePathPattern: (index: number) => {
@@ -86,7 +86,7 @@ export function preloadFrameSequenceProgressive(
   const total = urls.length;
   if (total === 0) return () => {};
 
-  const step = 8;
+  const step = 10;
   const tier1Indices: number[] = [];
   const tier2Indices: number[] = [];
 
@@ -137,7 +137,7 @@ export function preloadFrameSequenceProgressive(
     if (isCancelled) return;
 
     // 3. Stream Tier 2 in-between frames in small concurrent batches
-    const batchSize = 6;
+    const batchSize = 8;
     for (let i = 0; i < tier2Indices.length; i += batchSize) {
       if (isCancelled) break;
       const batch = tier2Indices.slice(i, i + batchSize);
