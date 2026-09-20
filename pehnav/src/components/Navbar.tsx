@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { categories, products, collections, formatPrice } from "@/lib/data";
 import MobileBottomBar from "@/components/MobileBottomBar";
+import BrandLogo from "@/components/BrandLogo";
 
 interface MegaGroup {
   label: string;
@@ -173,12 +174,10 @@ export default function Navbar() {
             <Link
               to="/"
               onClick={() => setMegaOpen(null)}
-              className="group flex items-center gap-1.5 transition-transform hover:scale-[1.02] active:scale-95"
+              className="group flex items-center transition-transform hover:scale-[1.02] active:scale-95"
+              aria-label="PEHNAV Home"
             >
-              <span className="font-display text-2xl font-black tracking-[0.24em] text-foreground transition-colors group-hover:text-cyan">
-                PEHNAV
-              </span>
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan inline-block animate-pulse" />
+              <BrandLogo size="md" />
             </Link>
 
             {/* Desktop nav */}

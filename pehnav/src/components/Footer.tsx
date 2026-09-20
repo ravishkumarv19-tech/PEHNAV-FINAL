@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Instagram, Twitter, Youtube, ArrowUpRight, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import BrandLogo from "@/components/BrandLogo";
 
 const LINKS = {
   shop: [
@@ -35,7 +36,9 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {/* Brand */}
             <div className="col-span-2 lg:col-span-2">
-              <Link to="/" className="font-display text-2xl sm:text-3xl font-black tracking-[0.2em]">PEHNAV</Link>
+              <Link to="/" className="group inline-block" aria-label="PEHNAV Home">
+                <BrandLogo size="lg" textClassName="text-background" />
+              </Link>
               <p className="mt-3 max-w-xs text-xs sm:text-sm leading-relaxed text-background/60">
                 Premium Indian fashion for those who wear their stories. Every stitch intentional. Every piece personal.
               </p>
