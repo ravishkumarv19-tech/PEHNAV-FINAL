@@ -438,56 +438,50 @@ export async function sendOrderConfirmationEmail(
     console.log("[Email] /api/send-email not available, trying direct proxies/endpoints...", err);
   }
 
-  // ── Strategy 2: Vite / Server Proxy (/api/resend/emails)
-  const proxyEndpoints = [
-    "/api/resend/emails",
-    "https://api.resend.com/emails",
-  ];
+  // ── Strategy 2: Supabase Edge Function (/functions/v1/send-order-email)
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (supabaseUrl && anonKey) {
+      console.log(`[Email] Attempting to dispatch via Supabase Edge Function to ${order.email}...`);
+      const edgeRes = await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
+        method: "POST",
+        headers: {
+          "apikey": anonKey,
+          "Authorization": `Bearer ${anonKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_number: order.order_number,
+          email: order.email,
+          customer_name: order.customer_name,
+          shipping_name: order.customer_name,
+          shipping_line1: order.shipping_address?.line1,
+          shipping_line2: order.shipping_address?.line2,
+          shipping_city: order.shipping_address?.city,
+          shipping_state: order.shipping_address?.state,
+          shipping_pincode: order.shipping_address?.pincode,
+          phone: order.phone,
+          subtotal: order.subtotal,
+          discount: order.discount,
+          shipping_fee: order.shipping_fee,
+          total: order.total,
+          coupon_code: order.coupon_code,
+          items: order.items,
+        }),
+      });
 
-  const senderOptions = [
-    `PEHNAV <${configuredFrom}>`,
-    `PEHNAV <orders@pehnav.store>`,
-    `PEHNAV <onboarding@resend.dev>`,
-  ];
-
-  let lastError = "";
-
-  for (const endpoint of proxyEndpoints) {
-    for (const fromAddress of senderOptions) {
-      try {
-        console.log(`[Email] Sending order confirmation email to ${order.email} from ${fromAddress} via ${endpoint}...`);
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: fromAddress,
-            to: [order.email],
-            reply_to: "orders@pehnav.store",
-            subject: subject,
-            html: html,
-          }),
-        });
-
-        const resData = await res.json();
-
-        if (res.ok && resData.id) {
-          console.log(`[Email] Successfully delivered order confirmation email! Resend ID: ${resData.id}`);
-          return { success: true, id: resData.id };
-        } else {
-          lastError = resData?.message || resData?.error || "Failed to send email";
-          console.warn(`[Email] Attempt with ${fromAddress} via ${endpoint} failed:`, lastError);
-          if (!lastError.toLowerCase().includes("domain") && !lastError.toLowerCase().includes("verify") && !lastError.toLowerCase().includes("testing")) {
-            break;
-          }
+      if (edgeRes.ok) {
+        const edgeData = await edgeRes.json();
+        if (edgeData.id) {
+          console.log(`[Email] Delivered via Supabase Edge Function! ID: ${edgeData.id}`);
+          return { success: true, id: edgeData.id };
         }
-      } catch (err: any) {
-        lastError = err?.message || String(err);
       }
     }
+  } catch (edgeErr) {
+    console.warn("[Email] Edge function dispatch failed:", edgeErr);
   }
 
-  return { success: false, error: lastError };
+  return { success: false, error: "Failed to dispatch email" };
 }

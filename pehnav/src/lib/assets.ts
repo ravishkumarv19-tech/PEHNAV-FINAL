@@ -281,3 +281,24 @@ export const PRODUCT_IMAGE_BY_ID: Record<string, string> = {
   "sport-watch": _royalWatch,
   "meridian-watch": _royalWatch,
 };
+
+/**
+ * Resolves an order item's image reliably, preventing broken images
+ * caused by Vite dev paths (/src/assets/...) or outdated hashes in production.
+ */
+export function resolveOrderItemImage(imageUrl?: string | null, productId?: string | null): string {
+  // 1. If productId has an exact Vite-bundled asset mapped, use it!
+  if (productId && PRODUCT_IMAGE_BY_ID[productId]) {
+    return PRODUCT_IMAGE_BY_ID[productId];
+  }
+  // 2. If imageUrl is a full external URL, use it
+  if (imageUrl && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("data:") || imageUrl.startsWith("blob:"))) {
+    return imageUrl;
+  }
+  // 3. If imageUrl is valid and NOT an unbuilt dev path (/src/...)
+  if (imageUrl && !imageUrl.startsWith("/src/") && !imageUrl.includes("placeholder")) {
+    return imageUrl;
+  }
+  // 4. Fallback to default product tee asset
+  return _modernTee;
+}

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase, type DBOrder, type DBOrderItem, type DBAddress } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
 import { formatPrice } from "@/lib/data";
+import { resolveOrderItemImage } from "@/lib/assets";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/account")({
@@ -300,13 +301,27 @@ function OrdersTab() {
               </div>
             </div>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-              {o.order_items.map((item) => (
-                <div key={item.id} className="flex-shrink-0 text-xs text-muted-foreground">
-                  <img src={item.image_url} alt={item.product_name} className="h-16 w-16 rounded-md object-cover border border-border" />
-                  <p className="mt-1 max-w-16 truncate">{item.product_name}</p>
-                  <p>{item.size} · ×{item.qty}</p>
-                </div>
-              ))}
+              {o.order_items.map((item) => {
+                const resolvedImg = resolveOrderItemImage(item.image_url, item.product_id);
+                return (
+                  <div key={item.id} className="flex-shrink-0 text-xs text-muted-foreground">
+                    <img
+                      src={resolvedImg}
+                      alt={item.product_name}
+                      className="h-16 w-16 rounded-md object-cover border border-border"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        const fallback = resolveOrderItemImage(null, item.product_id);
+                        if (target.src !== fallback) {
+                          target.src = fallback;
+                        }
+                      }}
+                    />
+                    <p className="mt-1 max-w-16 truncate">{item.product_name}</p>
+                    <p>{item.size} · ×{item.qty}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

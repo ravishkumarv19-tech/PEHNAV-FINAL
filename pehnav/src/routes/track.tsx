@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Package, Truck, CheckCircle, MapPin, Clock, Search, Loader2, ExternalLink, Copy, Check } from "lucide-react";
 import { supabase, type DBOrder, type DBOrderItem, type DBOrderStatusHistory } from "@/lib/supabase";
 import { formatPrice } from "@/lib/data";
+import { resolveOrderItemImage } from "@/lib/assets";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/track")({
@@ -306,16 +307,30 @@ export default function TrackPage() {
                 <span>Ordered Items</span>
               </h4>
               <div className="space-y-3">
-                {order.order_items?.map((item: DBOrderItem) => (
-                  <div key={item.id} className="flex items-center gap-3">
-                    <img src={item.image_url} alt={item.product_name} className="h-12 w-12 rounded-lg object-cover border border-border/80 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground truncate">{item.product_name}</p>
-                      <p className="text-[11px] text-muted-foreground">Size: {item.size} · Qty: {item.qty}</p>
+                {order.order_items?.map((item: DBOrderItem) => {
+                  const resolvedImg = resolveOrderItemImage(item.image_url, item.product_id);
+                  return (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <img
+                        src={resolvedImg}
+                        alt={item.product_name}
+                        className="h-12 w-12 rounded-lg object-cover border border-border/80 flex-shrink-0"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const fallback = resolveOrderItemImage(null, item.product_id);
+                          if (target.src !== fallback) {
+                            target.src = fallback;
+                          }
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{item.product_name}</p>
+                        <p className="text-[11px] text-muted-foreground">Size: {item.size} · Qty: {item.qty}</p>
+                      </div>
+                      <span className="text-xs font-bold text-gold">{formatPrice(item.total_price)}</span>
                     </div>
-                    <span className="text-xs font-bold text-gold">{formatPrice(item.total_price)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

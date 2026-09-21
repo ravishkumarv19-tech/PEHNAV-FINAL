@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { formatPrice } from "@/lib/data";
+import { resolveOrderItemImage } from "@/lib/assets";
 import { supabase } from "@/lib/supabase";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { toast } from "sonner";
@@ -166,7 +167,7 @@ function Checkout() {
               order_id: order.id,
               product_id: i.product.id,
               product_name: tl(i.product.name),
-              image_url: i.product.image || "/assets/product-tee.jpg",
+              image_url: resolveOrderItemImage(i.product.image, i.product.id),
               size: i.size,
               color: i.color,
               qty: i.qty,

@@ -318,9 +318,9 @@ export default function Orders() {
                   <div className="space-y-2">
                     {detail.order_items.map((item) => (
                       <div key={item.id} className="flex gap-3 rounded-lg bg-[#0f1117] p-3">
-                        <img src={item.image_url} alt={item.product_name}
+                        <img src={item.image_url || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&q=80"} alt={item.product_name}
                           className="h-12 w-10 rounded-md object-cover border border-[#2a2d3a] flex-shrink-0"
-                          onError={(e) => { (e.target as HTMLImageElement).src = ""; }} />
+                          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&q=80"; }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate">{item.product_name}</p>
                           <p className="text-xs text-gray-500">{item.size} · {item.color} · ×{item.qty}</p>
