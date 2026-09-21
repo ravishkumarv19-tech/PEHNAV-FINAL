@@ -347,26 +347,42 @@ create trigger set_updated_at before update on public.orders
   for each row execute function public.set_updated_at();
 
 -- ============================================================
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 
--- profiles: users see their own, admin sees all
-alter table public.profiles enable row level security;
-create policy "users_own_profile" on public.profiles
-  for all using (auth.uid() = id);
-create policy "admin_all_profiles" on public.profiles
-  for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+-- Helper function with SECURITY DEFINER to check admin status without RLS recursion
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(
+    (select role = 'admin' from public.profiles where id = auth.uid()),
+    false
   );
+$$;
+
+grant execute on function public.is_admin() to anon, authenticated, service_role;
+
+-- profiles: users see their own, admin sees all (non-recursive)
+alter table public.profiles enable row level security;
+drop policy if exists "users_own_profile" on public.profiles;
+drop policy if exists "admin_all_profiles" on public.profiles;
+
+create policy "users_own_profile" on public.profiles
+  for select using (auth.uid() = id or public.is_admin());
+create policy "users_update_own_profile" on public.profiles
+  for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- addresses
 alter table public.addresses enable row level security;
 create policy "users_own_addresses" on public.addresses
   for all using (auth.uid() = user_id);
 create policy "admin_all_addresses" on public.addresses
-  for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for all using (public.is_admin());
 
 -- products: public read, admin write
 alter table public.products enable row level security;
@@ -374,7 +390,7 @@ create policy "public_read_products" on public.products
   for select using (true);
 create policy "admin_write_products" on public.products
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- categories: public read, admin write
@@ -382,7 +398,7 @@ alter table public.categories enable row level security;
 create policy "public_read_categories" on public.categories for select using (true);
 create policy "admin_write_categories" on public.categories
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- collections: public read, admin write
@@ -390,7 +406,7 @@ alter table public.collections enable row level security;
 create policy "public_read_collections" on public.collections for select using (true);
 create policy "admin_write_collections" on public.collections
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- wishlists: users own theirs
@@ -411,7 +427,7 @@ create policy "users_insert_orders" on public.orders
   for insert with check (auth.uid() = user_id or user_id is null);
 create policy "admin_all_orders" on public.orders
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- order_items: same as orders
@@ -422,7 +438,7 @@ create policy "users_own_order_items" on public.order_items
   );
 create policy "admin_all_order_items" on public.order_items
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- order_status_history: same visibility as orders
@@ -433,7 +449,7 @@ create policy "users_see_own_order_history" on public.order_status_history
   );
 create policy "admin_all_history" on public.order_status_history
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- reviews: approved reviews are public, users manage their own
@@ -444,7 +460,7 @@ create policy "users_own_reviews" on public.reviews
   for all using (auth.uid() = user_id);
 create policy "admin_all_reviews" on public.reviews
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- coupons: public read active, admin manages all
@@ -453,7 +469,7 @@ create policy "public_read_active_coupons" on public.coupons
   for select using (active = true);
 create policy "admin_all_coupons" on public.coupons
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- newsletter: insert only for public
@@ -462,7 +478,7 @@ create policy "public_subscribe" on public.newsletter_subscribers
   for insert with check (true);
 create policy "admin_read_subscribers" on public.newsletter_subscribers
   for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- blog: public read published
@@ -471,7 +487,7 @@ create policy "public_read_published_posts" on public.blog_posts
   for select using (published = true);
 create policy "admin_all_posts" on public.blog_posts
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 
 -- ============================================================

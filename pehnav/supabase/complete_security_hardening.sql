@@ -1,7 +1,29 @@
 -- ============================================================
--- PEHNAV — Complete Security Hardening Patch (Production Grade)
+-- PEHNAV — Complete Security Hardening Patch (Production Grade, Anti-Recursion)
 -- Run this in Supabase Dashboard → SQL Editor → New Query
 -- ============================================================
+
+-- ── 0. SECURE ADMIN ROLE HELPER (Zero-Recursion SECURITY DEFINER) ───────────
+-- Required by PostgreSQL/Supabase to avoid infinite RLS loops when querying profiles.
+-- "security definer" + "set search_path = public" executes with elevated system rights
+-- and cannot be hijacked or poisoned.
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(
+    (select role = 'admin' from public.profiles where id = auth.uid()),
+    false
+  );
+$$;
+
+-- Grant execution to authenticated & anon so policies evaluate cleanly without errors
+grant execute on function public.is_admin() to anon, authenticated, service_role;
+
 
 -- ── 1. PREVENT ROLE ESCALATION (Block Customers from Becoming Admin) ─────────
 -- Drops any potential loophole where a user could run:
@@ -11,14 +33,13 @@ create or replace function public.prevent_role_escalation()
 returns trigger
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   -- If role is changing
   if new.role is distinct from old.role then
     -- Only allow service_role or existing admin to change role
-    if auth.role() != 'service_role' and not exists (
-      select 1 from public.profiles where id = auth.uid() and role = 'admin'
-    ) then
+    if auth.role() != 'service_role' and not public.is_admin() then
       raise exception 'SECURITY VIOLATION: You are not authorized to modify user roles.';
     end if;
   end if;
@@ -36,11 +57,17 @@ alter table public.profiles enable row level security;
 drop policy if exists "users_own_profile" on public.profiles;
 drop policy if exists "admin_all_profiles" on public.profiles;
 drop policy if exists "allow_all_profiles" on public.profiles;
+drop policy if exists "users_select_profile" on public.profiles;
+drop policy if exists "users_update_profile" on public.profiles;
+drop policy if exists "service_role_profiles" on public.profiles;
 
--- Users can read their own profile, public can read basic author info
+-- Users can read their own profile, admins can read all profiles (via is_admin, zero recursion)
 create policy "users_select_profile" on public.profiles
   for select
-  using (auth.uid() = id or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+  using (
+    auth.uid() = id 
+    or public.is_admin()
+  );
 
 -- Users can only update their own profile (role change is blocked by trigger above)
 create policy "users_update_profile" on public.profiles
@@ -69,6 +96,9 @@ drop policy if exists "users_insert_orders" on public.orders;
 drop policy if exists "authenticated_insert_orders" on public.orders;
 drop policy if exists "users_read_own_orders" on public.orders;
 drop policy if exists "service_role_all_orders" on public.orders;
+drop policy if exists "customers_insert_orders" on public.orders;
+drop policy if exists "users_select_own_orders" on public.orders;
+drop policy if exists "admin_and_service_update_orders" on public.orders;
 
 -- 1) INSERT: Allow customers & guests to create an order (starts in pending state)
 create policy "customers_insert_orders" on public.orders
@@ -80,12 +110,11 @@ create policy "customers_insert_orders" on public.orders
   );
 
 -- 2) SELECT: Users can only see THEIR OWN orders. Admins can see all.
--- Anonymous users CANNOT dump the table! Tracking is handled via secure RPC below.
 create policy "users_select_own_orders" on public.orders
   for select
   using (
     (auth.uid() is not null and auth.uid() = user_id)
-    or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    or public.is_admin()
     or auth.role() = 'service_role'
   );
 
@@ -94,11 +123,11 @@ create policy "users_select_own_orders" on public.orders
 create policy "admin_and_service_update_orders" on public.orders
   for update
   using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
     or auth.role() = 'service_role'
   )
   with check (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
     or auth.role() = 'service_role'
   );
 
@@ -114,6 +143,8 @@ drop policy if exists "admin_all_order_items" on public.order_items;
 drop policy if exists "users_insert_own_order_items" on public.order_items;
 drop policy if exists "users_select_own_order_items" on public.order_items;
 drop policy if exists "service_role_all_order_items" on public.order_items;
+drop policy if exists "insert_order_items" on public.order_items;
+drop policy if exists "select_order_items" on public.order_items;
 
 -- Insert: allowed during order placement
 create policy "insert_order_items" on public.order_items
@@ -129,7 +160,7 @@ create policy "select_order_items" on public.order_items
       where o.id = order_items.order_id
         and (
           (auth.uid() is not null and o.user_id = auth.uid())
-          or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+          or public.is_admin()
         )
     )
     or auth.role() = 'service_role'
@@ -144,12 +175,14 @@ drop policy if exists "allow_select_order_history" on public.order_status_histor
 drop policy if exists "public_track_order_history" on public.order_status_history;
 drop policy if exists "users_see_own_order_history" on public.order_status_history;
 drop policy if exists "admin_all_history" on public.order_status_history;
+drop policy if exists "admin_insert_order_history" on public.order_status_history;
+drop policy if exists "select_order_history" on public.order_status_history;
 
 -- Only admin or service_role can add status events
 create policy "admin_insert_order_history" on public.order_status_history
   for insert
   with check (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
     or auth.role() = 'service_role'
   );
 
@@ -162,7 +195,7 @@ create policy "select_order_history" on public.order_status_history
       where o.id = order_status_history.order_id
         and (
           (auth.uid() is not null and o.user_id = auth.uid())
-          or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+          or public.is_admin()
         )
     )
     or auth.role() = 'service_role'
@@ -253,6 +286,7 @@ drop policy if exists "authenticated_read_active_coupons" on public.coupons;
 drop policy if exists "service_role_all_coupons" on public.coupons;
 drop policy if exists "admin_manage_coupons" on public.coupons;
 drop policy if exists "admin_all_coupons" on public.coupons;
+drop policy if exists "service_role_coupons" on public.coupons;
 
 -- Public can check if an active coupon is valid (read only)
 create policy "public_read_active_coupons" on public.coupons
@@ -262,8 +296,8 @@ create policy "public_read_active_coupons" on public.coupons
 -- Admins can create/edit/delete coupons
 create policy "admin_manage_coupons" on public.coupons
   for all
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'))
-  with check (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Service role has full control
 create policy "service_role_coupons" on public.coupons
@@ -278,11 +312,13 @@ drop policy if exists "public_approved_reviews" on public.reviews;
 drop policy if exists "users_own_reviews" on public.reviews;
 drop policy if exists "users_insert_reviews" on public.reviews;
 drop policy if exists "admin_all_reviews" on public.reviews;
+drop policy if exists "public_read_approved_reviews" on public.reviews;
+drop policy if exists "admin_manage_reviews" on public.reviews;
 
 -- Approved reviews are public to read
 create policy "public_read_approved_reviews" on public.reviews
   for select
-  using (status = 'approved' or auth.uid() = user_id or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (status = 'approved' or auth.uid() = user_id or public.is_admin());
 
 -- Logged in or guest can insert review, but defaults to pending
 create policy "users_insert_reviews" on public.reviews
@@ -292,5 +328,5 @@ create policy "users_insert_reviews" on public.reviews
 -- Only admins can approve or reject reviews
 create policy "admin_manage_reviews" on public.reviews
   for update
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'))
-  with check (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin())
+  with check (public.is_admin());
