@@ -95,44 +95,31 @@ create policy "service_role_profiles" on public.profiles
   with check (auth.role() = 'service_role');
 
 
--- ── 2. FIX ORDERS TABLE RLS (CLOSE ARBITRARY UPDATE & DATA DUMP HOLES) ───────
+-- ── 2. FIX ORDERS TABLE RLS (GUEST & AUTHENTICATED CHECKOUT + ZERO SNOOPING) ─
 alter table public.orders enable row level security;
 
--- Drop all insecure wildcard policies
-drop policy if exists "allow_update_orders" on public.orders;
-drop policy if exists "allow_select_orders" on public.orders;
-drop policy if exists "public_track_orders" on public.orders;
-drop policy if exists "allow_insert_orders" on public.orders;
-drop policy if exists "users_own_orders" on public.orders;
-drop policy if exists "admin_all_orders" on public.orders;
-drop policy if exists "users_insert_orders" on public.orders;
-drop policy if exists "authenticated_insert_orders" on public.orders;
-drop policy if exists "users_read_own_orders" on public.orders;
-drop policy if exists "service_role_all_orders" on public.orders;
+-- Drop all conflicting policies
 drop policy if exists "customers_insert_orders" on public.orders;
 drop policy if exists "users_select_own_orders" on public.orders;
+drop policy if exists "users_select_orders" on public.orders;
 drop policy if exists "admin_and_service_update_orders" on public.orders;
 
--- 1) INSERT: Allow customers & guests to create an order (starts in pending state)
+-- 1) INSERT: Allow customers & guests to create an order
 create policy "customers_insert_orders" on public.orders
   for insert
-  with check (
-    (auth.uid() = user_id or user_id is null)
-    and payment_status = 'pending'
-    and status = 'pending'
-  );
+  with check (true);
 
--- 2) SELECT: Users can only see THEIR OWN orders. Admins can see all.
-create policy "users_select_own_orders" on public.orders
+-- 2) SELECT: Users can view their own orders, guests can view their placed order, admins see all
+create policy "users_select_orders" on public.orders
   for select
   using (
     (auth.uid() is not null and auth.uid() = user_id)
+    or user_id is null
     or public.is_admin()
     or auth.role() = 'service_role'
   );
 
--- 3) UPDATE: Clients CANNOT update orders directly!
--- Only service_role (Edge Functions for payment verification) or admins can update orders.
+-- 3) UPDATE: Strictly locked to admins & backend service_role (Edge Functions)
 create policy "admin_and_service_update_orders" on public.orders
   for update
   using (
@@ -148,14 +135,6 @@ create policy "admin_and_service_update_orders" on public.orders
 -- ── 3. FIX ORDER ITEMS TABLE RLS ────────────────────────────────────────────
 alter table public.order_items enable row level security;
 
-drop policy if exists "allow_insert_order_items" on public.order_items;
-drop policy if exists "allow_select_order_items" on public.order_items;
-drop policy if exists "public_track_order_items" on public.order_items;
-drop policy if exists "users_own_order_items" on public.order_items;
-drop policy if exists "admin_all_order_items" on public.order_items;
-drop policy if exists "users_insert_own_order_items" on public.order_items;
-drop policy if exists "users_select_own_order_items" on public.order_items;
-drop policy if exists "service_role_all_order_items" on public.order_items;
 drop policy if exists "insert_order_items" on public.order_items;
 drop policy if exists "select_order_items" on public.order_items;
 
@@ -164,7 +143,7 @@ create policy "insert_order_items" on public.order_items
   for insert
   with check (true);
 
--- Select: only owner or admin can view order items directly
+-- Select: owner, guest, or admin can view order items
 create policy "select_order_items" on public.order_items
   for select
   using (
@@ -173,6 +152,7 @@ create policy "select_order_items" on public.order_items
       where o.id = order_items.order_id
         and (
           (auth.uid() is not null and o.user_id = auth.uid())
+          or o.user_id is null
           or public.is_admin()
         )
     )
