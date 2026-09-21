@@ -52,12 +52,25 @@ create trigger trg_prevent_role_escalation
   before update on public.profiles
   for each row execute function public.prevent_role_escalation();
 
+-- Dynamically clean up any existing policies on profiles, orders, and order_items
+-- to guarantee 100% error-free idempotent execution (avoids ERROR 42710)
+do $$
+declare
+  pol record;
+begin
+  for pol in select policyname from pg_policies where schemaname = 'public' and tablename = 'profiles' loop
+    execute format('drop policy if exists %I on public.profiles', pol.policyname);
+  end loop;
+  for pol in select policyname from pg_policies where schemaname = 'public' and tablename = 'orders' loop
+    execute format('drop policy if exists %I on public.orders', pol.policyname);
+  end loop;
+  for pol in select policyname from pg_policies where schemaname = 'public' and tablename = 'order_items' loop
+    execute format('drop policy if exists %I on public.order_items', pol.policyname);
+  end loop;
+end $$;
+
 -- Tighten profiles RLS
 alter table public.profiles enable row level security;
-drop policy if exists "users_own_profile" on public.profiles;
-drop policy if exists "admin_all_profiles" on public.profiles;
-drop policy if exists "allow_all_profiles" on public.profiles;
-drop policy if exists "users_select_profile" on public.profiles;
 drop policy if exists "users_update_profile" on public.profiles;
 drop policy if exists "service_role_profiles" on public.profiles;
 
