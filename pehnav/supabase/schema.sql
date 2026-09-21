@@ -210,18 +210,24 @@ create table public.orders (
   updated_at       timestamptz not null default now()
 );
 
--- Auto-generate order number
+-- Auto-generate order number (thread-safe sequence with SECURITY DEFINER)
+create sequence if not exists public.order_number_seq start with 10001;
+
 create or replace function public.generate_order_number()
-returns trigger language plpgsql as $$
-declare
-  seq int;
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
-  select count(*) + 10000 into seq from public.orders;
-  new.order_number := 'PHN-' || seq::text;
+  if new.order_number is null or trim(new.order_number) = '' then
+    new.order_number := 'PHN-' || nextval('public.order_number_seq')::text;
+  end if;
   return new;
 end;
 $$;
 
+drop trigger if exists set_order_number on public.orders;
 create trigger set_order_number
   before insert on public.orders
   for each row execute function public.generate_order_number();

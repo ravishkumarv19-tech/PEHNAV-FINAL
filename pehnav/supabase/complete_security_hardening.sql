@@ -25,7 +25,48 @@ $$;
 grant execute on function public.is_admin() to anon, authenticated, service_role;
 
 
--- ── 1. PREVENT ROLE ESCALATION (Block Customers from Becoming Admin) ─────────
+-- ── 1. THREAD-SAFE ATOMIC ORDER NUMBER SEQUENCE (Zero Collisions, Anti-RLS) ───
+-- Fixes "duplicate key value violates unique constraint orders_order_number_key"
+-- Uses atomic sequence with SECURITY DEFINER so anonymous guest RLS can never cause collisions.
+
+create sequence if not exists public.order_number_seq;
+
+-- Align sequence to the highest existing order number + 1
+do $$
+declare
+  max_num bigint;
+begin
+  select coalesce(max(nullif(regexp_replace(order_number, '\D', '', 'g'), '')::bigint), 10000) + 1
+  into max_num
+  from public.orders;
+
+  execute format('alter sequence public.order_number_seq restart with %s', max_num);
+end $$;
+
+grant usage, select on sequence public.order_number_seq to anon, authenticated, service_role;
+
+-- Overwrite trigger function with SECURITY DEFINER and atomic nextval
+create or replace function public.generate_order_number()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.order_number is null or trim(new.order_number) = '' then
+    new.order_number := 'PHN-' || nextval('public.order_number_seq')::text;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists set_order_number on public.orders;
+create trigger set_order_number
+  before insert on public.orders
+  for each row execute function public.generate_order_number();
+
+
+-- ── 2. PREVENT ROLE ESCALATION (Block Customers from Becoming Admin) ─────────
 -- Drops any potential loophole where a user could run:
 -- supabase.from('profiles').update({ role: 'admin' }).eq('id', user.id)
 

@@ -166,7 +166,7 @@ function Checkout() {
               order_id: order.id,
               product_id: i.product.id,
               product_name: tl(i.product.name),
-              image_url: i.product.image,
+              image_url: i.product.image || "/assets/product-tee.jpg",
               size: i.size,
               color: i.color,
               qty: i.qty,
@@ -182,11 +182,13 @@ function Checkout() {
         if (!isSimulated && !isDevMode) {
           // Verify payment HMAC server-side for real gateway
           const { data: { session } } = await supabase.auth.getSession();
+          const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
           const verifyRes = await fetch(`${supabaseUrl}/functions/v1/verify-payment`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.access_token ?? ""}`,
+              "apikey": anonKey,
+              Authorization: `Bearer ${session?.access_token ?? anonKey}`,
             },
             body: JSON.stringify({
               razorpay_order_id: razorpayOrderId,
@@ -197,7 +199,13 @@ function Checkout() {
           });
 
           if (!verifyRes.ok) {
-            toast.error(`Payment verification failed. Contact support with Order ID: ${order.order_number ?? order.id.slice(0, 8)}`);
+            const errBody = await verifyRes.json().catch(() => ({}));
+            console.error("verify-payment failed:", verifyRes.status, errBody);
+            toast.error(
+              errBody?.error
+                ? `Payment verification failed: ${errBody.error}. Contact support with Order ID: ${order.order_number ?? order.id.slice(0, 8)}`
+                : `Payment verification failed. Contact support with Order ID: ${order.order_number ?? order.id.slice(0, 8)}`
+            );
             setLoading(false);
             return;
           }
